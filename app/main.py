@@ -65,3 +65,12 @@ def checklist(data: TextInput):
 async def get_adaptive_suggestions(request: SuggestionRequest):
     suggestions = generate_adaptive_suggestions(request.user_id)
     return suggestions
+
+class UserMoodTask(BaseModel):
+    mood: str
+    tasks: list  # List of task descriptions
+
+@app.post("/mood_task_sort/")
+async def mood_task_sort(user_mood_task: UserMoodTask):
+    sorted_tasks = sort_tasks_based_on_mood(user_mood_task.mood, user_mood_task.tasks)
+    return {"sorted_tasks": sorted_tasks}

@@ -1,7 +1,19 @@
 import spacy
 import requests
-import dateparser
 from datetime import datetime
+from fastapi import FastAPI
+from pydantic import BaseModel
+from openai import OpenAI
+import os
+import dateparser
+
+
+# OpenAI API key (store it securely, like in environment variables)
+openaiKey = "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"
+
+app = FastAPI()
+
+
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -86,3 +98,30 @@ def generate_checklist(goal):
         return checklist
     else:
         return [f"Error {response.status_code}: {response.json()}"]
+
+
+
+
+
+
+# Function to interact with OpenAI API for mood-based task sorting
+def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
+    # Prepare prompt for OpenAI API to prioritize tasks based on the mood
+    prompt = f"User's current mood: {mood}\n\nTasks:\n" + "\n".join(tasks) + "\n\nPrioritize the tasks based on the mood and sort them in the most appropriate order."
+    client = OpenAI(
+    # This is the default and can be omitted
+    api_key=openaiKey,
+)
+    # Call OpenAI API to process the tasks and mood
+    response = client.responses.create(
+        model="text-davinci-003",  # Choose the engine (e.g., text-davinci-003 for GPT-3)
+        instruction="Sort the tasks based on the user's mood.",
+        input=prompt,
+        max_tokens=150,
+        n=1,
+        stop=None,
+        temperature=0.7
+    )
+
+    sorted_tasks = response.choices[0].text.strip().split('\n')
+    return sorted_tasks
