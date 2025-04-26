@@ -9,6 +9,7 @@ import io
 from app.routes import sample
 from app.routes import suggestions
 from app.schemas import TextInput  
+from app import nlp_utils  
 from app.routes import suggestions      
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File
@@ -19,7 +20,7 @@ from typing import List
 from fastapi import APIRouter
 from app.models import SuggestionRequest, SuggestedTask
 from app.services.suggestions_engine import generate_adaptive_suggestions
-from nlp_utils import parse_task_details, summarize_text, categorize_task, generate_checklist, sort_tasks_based_on_mood
+
 
 router = APIRouter()
 
@@ -82,7 +83,7 @@ class UserMoodTask(BaseModel):
 @app.post("/mood_task_sort/")
 async def mood_task_sort(user_mood_task: UserMoodTask):
     try:
-        sorted_tasks = sort_tasks_based_on_mood(user_mood_task.mood, user_mood_task.tasks)
+        sorted_tasks = nlp_utils.sort_tasks_based_on_mood(user_mood_task.mood, user_mood_task.tasks)
         return {"sorted_tasks": sorted_tasks}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
