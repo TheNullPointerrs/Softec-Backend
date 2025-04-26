@@ -1,5 +1,7 @@
 import spacy
 import requests
+import dateparser
+from datetime import datetime
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -26,8 +28,19 @@ def parse_task_entities(text):
     entities = []
 
     for ent in doc.ents:
-        if ent.label_ in ["DATE", "TIME"]:
-            entities.append({"text": ent.text, "label": ent.label_})
+        if ent.label_ == "DATE":
+            parsed_date = dateparser.parse(ent.text)
+            if parsed_date:
+                entities.append({"text": parsed_date.strftime("%Y-%m-%d"), "label": "DATE"})
+            else:
+                entities.append({"text": ent.text, "label": "DATE"})
+
+        elif ent.label_ == "TIME":
+            parsed_time = dateparser.parse(ent.text)
+            if parsed_time:
+                entities.append({"text": parsed_time.strftime("%H:%M"), "label": "TIME"})
+            else:
+                entities.append({"text": ent.text, "label": "TIME"})
 
     # Add title entity (first 6 words or 50 chars)
     title = " ".join(text.split()[:6])
