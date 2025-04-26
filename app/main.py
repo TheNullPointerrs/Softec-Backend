@@ -9,7 +9,6 @@ import io
 from app.routes import sample
 from app.routes import suggestions
 from app.schemas import TextInput  
-from app import nlp_utils  
 from app.routes import suggestions      
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File
