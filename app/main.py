@@ -3,7 +3,7 @@ from app.routes import sample
 from app.schemas import TextInput  
 from app import nlp_utils  
 from app.routes import suggestions      
-
+from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File
 import easyocr
 import io
@@ -44,6 +44,7 @@ def categorize_task(input: TextInput):
 async def ocr(file: UploadFile = File(...)):
     # Read the uploaded file as bytes
     img_bytes = await file.read()
+    reader = easyocr.Reader(['en'])  
 
     # OCR the image bytes directly
     results = reader.readtext(img_bytes)
