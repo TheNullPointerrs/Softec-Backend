@@ -76,14 +76,18 @@ def categorize_task(text):
     return category.capitalize()
 
 def summarize_text(text):
-    payload = {"inputs": text}
-    response = requests.post(SUMMARIZATION_API_URL, headers=HEADERS, json=payload)
-
-    if response.status_code == 200:
-        summary = response.json()[0]["summary_text"]
-        return summary
-    else:
-        return f"Error {response.status_code}: {response.json()}"
+    client = OpenAI(api_key=openaiKey)
+    
+    prompt = f"Please summarize the following text concisely:\n\n{text}"
+    
+    response = client.completions.create(
+        model="text-davinci-003",
+        prompt=prompt,
+        max_tokens=100,
+        temperature=0.3
+    )
+    
+    return response.choices[0].text.strip()
 
 def generate_checklist(goal):
     prompt = f"Break down the goal '{goal}' into a checklist of 5 actionable steps."
