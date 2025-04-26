@@ -1,17 +1,24 @@
 # app/main.py
 from app.routes import sample
-from app.schemas import TextInput  # <-- add this
-from app import nlp_utils         # <-- and this
+from app.schemas import TextInput  
+from app import nlp_utils  
+from app.routes import suggestions      
 
 from fastapi import FastAPI, UploadFile, File
 import easyocr
 import io
+
+from typing import List
+from fastapi import APIRouter
+from app.models import SuggestionRequest, SuggestedTask
+from app.services.suggestions_engine import generate_adaptive_suggestions
 
 
 app = FastAPI()
 
 # Include your routes
 app.include_router(sample.router)
+app.include_router(suggestions.router, prefix="/api")
 
 @app.get("/")
 def root():
@@ -50,3 +57,10 @@ async def ocr(file: UploadFile = File(...)):
 def checklist(data: TextInput):
     checklist = task_utils.generate_checklist(data.text)
     return {"goal": data.text, "checklist": checklist}
+
+
+
+@router.post("/suggestions", response_model=List[SuggestedTask])
+async def get_adaptive_suggestions(request: SuggestionRequest):
+    suggestions = generate_adaptive_suggestions(request.user_id)
+    return suggestions
