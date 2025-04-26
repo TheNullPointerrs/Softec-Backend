@@ -5,8 +5,12 @@ from datetime import datetime
 
 nlp = spacy.load("en_core_web_sm")
 
+# Summarization model (Bart)
+SUMMARIZATION_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+# Checklist generator model (Flan-T5-small)
+CHECKLIST_API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
+
 API_TOKEN = "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"
-API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
 
 # Predefined categories
@@ -61,10 +65,24 @@ def categorize_task(text):
 
 def summarize_text(text):
     payload = {"inputs": text}
-    response = requests.post(API_URL, headers=HEADERS, json=payload)
+    response = requests.post(SUMMARIZATION_API_URL, headers=HEADERS, json=payload)
 
     if response.status_code == 200:
         summary = response.json()[0]["summary_text"]
         return summary
     else:
         return f"Error {response.status_code}: {response.json()}"
+
+def generate_checklist(goal):
+    prompt = f"Break down the goal '{goal}' into a checklist of 5 actionable steps."
+
+    payload = {"inputs": prompt}
+    response = requests.post(CHECKLIST_API_URL, headers=HEADERS, json=payload)
+
+    if response.status_code == 200:
+        text = response.json()[0]["generated_text"]
+        checklist = text.split("\n")
+        checklist = [step.strip() for step in checklist if step.strip()]
+        return checklist
+    else:
+        return [f"Error {response.status_code}: {response.json()}"]
