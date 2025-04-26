@@ -1,13 +1,15 @@
 # app/main.py
 from fastapi import FastAPI
 from app.routes import sample
-from app.schemas import TextInput  # <-- add this
-from app import nlp_utils         # <-- and this
+from app.schemas import TextInput  
+from app import nlp_utils  
+from app.routes import suggestions      
 
 app = FastAPI()
 
 # Include your routes
 app.include_router(sample.router)
+app.include_router(suggestions.router, prefix="/api")
 
 @app.get("/")
 def root():
