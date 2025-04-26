@@ -1,5 +1,13 @@
 # app/main.py
+from fastapi import FastAPI, UploadFile, File, APIRouter
+from typing import List
+from pydantic import BaseModel
+
+import easyocr
+import io
+
 from app.routes import sample
+from app.routes import suggestions
 from app.schemas import TextInput  
 from app import nlp_utils  
 from app.routes import suggestions      
@@ -12,6 +20,7 @@ from typing import List
 from fastapi import APIRouter
 from app.models import SuggestionRequest, SuggestedTask
 from app.services.suggestions_engine import generate_adaptive_suggestions
+
 
 router = APIRouter()
 
@@ -57,7 +66,7 @@ async def ocr(file: UploadFile = File(...)):
 
 @app.post("/generate-checklist")
 def checklist(data: TextInput):
-    checklist = task_utils.generate_checklist(data.text)
+    checklist = nlp_utils.generate_checklist(data.text)
     return {"goal": data.text, "checklist": checklist}
 
 
