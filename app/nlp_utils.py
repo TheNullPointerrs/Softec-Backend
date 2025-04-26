@@ -108,15 +108,14 @@ def generate_checklist(goal):
 def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
     # Prepare prompt for OpenAI API to prioritize tasks based on the mood
     prompt = f"User's current mood: {mood}\n\nTasks:\n" + "\n".join(tasks) + "\n\nPrioritize the tasks based on the mood and sort them in the most appropriate order."
+    
     client = OpenAI(
-    # This is the default and can be omitted
-    api_key=openaiKey,
-)
-    # Call OpenAI API to process the tasks and mood
-    response = client.responses.create(
-        model="text-davinci-003",  # Choose the engine (e.g., text-davinci-003 for GPT-3)
-        instruction="Sort the tasks based on the user's mood.",
-        input=prompt,
+        api_key=openaiKey,
+    )
+    
+    response = client.completions.create(
+        model="text-davinci-003",
+        prompt=prompt,
         max_tokens=150,
         n=1,
         stop=None,
@@ -125,3 +124,4 @@ def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
 
     sorted_tasks = response.choices[0].text.strip().split('\n')
     return sorted_tasks
+

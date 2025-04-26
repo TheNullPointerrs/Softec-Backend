@@ -82,5 +82,8 @@ class UserMoodTask(BaseModel):
 
 @app.post("/mood_task_sort/")
 async def mood_task_sort(user_mood_task: UserMoodTask):
-    sorted_tasks = sort_tasks_based_on_mood(user_mood_task.mood, user_mood_task.tasks)
-    return {"sorted_tasks": sorted_tasks}
+    try:
+        sorted_tasks = sort_tasks_based_on_mood(user_mood_task.mood, user_mood_task.tasks)
+        return {"sorted_tasks": sorted_tasks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
