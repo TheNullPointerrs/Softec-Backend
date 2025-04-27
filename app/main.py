@@ -26,7 +26,6 @@ router = APIRouter()
 
 app = FastAPI()
 
-# Include your routes
 app.include_router(sample.router)
 app.include_router(suggestions.router, prefix="/api")
 
@@ -36,7 +35,7 @@ def root():
 
 @app.post("/parse-task")
 def parse_task(input: TextInput):
-    entities = nlp_utils.parse_task_details(input.text)
+    entities = nlp_utils.parse_task_entities(input.text)
     return {"entities": entities}
 
 @app.post("/summarize-note")
@@ -51,14 +50,11 @@ def categorize_task(input: TextInput):
 
 @app.post("/ocr/")
 async def ocr(file: UploadFile = File(...)):
-    # Read the uploaded file as bytes
     img_bytes = await file.read()
     reader = easyocr.Reader(['en'])  
 
-    # OCR the image bytes directly
     results = reader.readtext(img_bytes)
 
-    # Extract the detected text
     extracted_text = " ".join([text for _, text, _ in results])
 
     return {"extracted_text": extracted_text}
@@ -78,7 +74,7 @@ async def get_adaptive_suggestions(request: SuggestionRequest):
 
 class UserMoodTask(BaseModel):
     mood: str
-    tasks: list  # List of task descriptions
+    tasks: list 
 
 @app.post("/mood_task_sort/")
 async def mood_task_sort(user_mood_task: UserMoodTask):
