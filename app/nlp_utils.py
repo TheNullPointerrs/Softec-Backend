@@ -3,24 +3,17 @@ import requests
 from datetime import datetime
 from fastapi import FastAPI
 from pydantic import BaseModel
-from openai import OpenAI
 import os
 import dateparser
 
-
-# OpenAI API key (store it securely, like in environment variables)
-openaiKey = "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"
-
 app = FastAPI()
-
-
 
 nlp = spacy.load("en_core_web_sm")
 
-# Summarization model (Bart)
+# Hugging Face API endpoints
 SUMMARIZATION_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-# Checklist generator model (Flan-T5-small)
 CHECKLIST_API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
+SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english"
 
 API_TOKEN = "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"
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
@@ -76,18 +69,19 @@ def categorize_task(text):
     return category.capitalize()
 
 def summarize_text(text):
-    client = OpenAI(api_key=openaiKey)
+    # Using Hugging Face's bart-large-cnn model for summarization instead of OpenAI
+    payload = {
+        "inputs": text,
+        "parameters": {"max_length": 100, "min_length": 30}
+    }
     
-    prompt = f"Please summarize the following text concisely:\n\n{text}"
+    response = requests.post(SUMMARIZATION_API_URL, headers=HEADERS, json=payload)
     
-    response = client.completions.create(
-        model="gpt-3.5-turbo",  # Note: For newer OpenAI client, use chat completions for gpt-3.5-turbo
-        prompt=prompt,
-        max_tokens=100,
-        temperature=0.3
-    )
-    
-    return response.choices[0].text.strip()
+    if response.status_code == 200:
+        return response.json()[0]["summary_text"]
+    else:
+        # Fallback to simple truncation if API fails
+        return text[:200] + "..." if len(text) > 200 else text
 
 def generate_checklist(goal):
     prompt = f"Break down the goal '{goal}' into a checklist of 5 actionable steps."
@@ -103,26 +97,36 @@ def generate_checklist(goal):
     else:
         return [f"Error {response.status_code}: {response.json()}"]
 
-
-
-
-
-
 def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
-    # Prepare prompt for OpenAI API to prioritize tasks based on the mood
-    prompt = f"User's current mood: {mood}\n\nTasks:\n" + "\n".join(tasks) + "\n\nPrioritize the tasks based on the mood and sort them in the most appropriate order."
+    # Using Hugging Face for sentiment analysis and task sorting
+    # First, analyze the mood using sentiment analysis
+    mood_payload = {"inputs": mood}
+    mood_response = requests.post(SENTIMENT_API_URL, headers=HEADERS, json=mood_payload)
     
-    client = OpenAI(
-        api_key=openaiKey,
-    )
+    if mood_response.status_code != 200:
+        # If sentiment analysis fails, just return the original task list
+        return tasks
+        
+    # Prepare prompt for task sorting based on mood analysis result
+    sentiment_result = mood_response.json()[0]
+    sentiment = "positive" if sentiment_result["score"] > 0.5 else "negative"
     
-    response = client.completions.create(
-        model="gpt-3.5-turbo",
-        prompt=prompt,
-        max_tokens=100,
-        temperature=0.3
-    )
-
-    sorted_tasks = response.choices[0].text.strip().split('\n')
-    return sorted_tasks
-
+    # Create a prompt for the T5 model to sort tasks
+    sort_prompt = f"Sort these tasks for someone in a {sentiment} mood: {', '.join(tasks)}"
+    
+    sort_payload = {"inputs": sort_prompt}
+    sort_response = requests.post(CHECKLIST_API_URL, headers=HEADERS, json=sort_payload)
+    
+    if sort_response.status_code == 200:
+        sorted_text = sort_response.json()[0]["generated_text"]
+        # Parse the response into a list of tasks
+        sorted_tasks = [task.strip() for task in sorted_text.split(",") if task.strip()]
+        
+        # If parsing failed or returned insufficient results, return original tasks
+        if len(sorted_tasks) < len(tasks) // 2:
+            return tasks
+            
+        return sorted_tasks
+    else:
+        # If API call fails, return original tasks
+        return tasks
