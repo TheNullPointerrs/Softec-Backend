@@ -80,12 +80,13 @@ def summarize_text(text):
     
     prompt = f"Please summarize the following text concisely:\n\n{text}"
     
-    response = client.completions.create(
-        model="text-davinci-003",
-        prompt=prompt,
-        max_tokens=100,
-        temperature=0.3
-    )
+response = openai.Completion.create(
+    model="gpt-3.5-turbo",  # or "gpt-4" depending on availability
+    prompt=prompt,
+    max_tokens=100,
+    temperature=0.3
+)
+
     
     return response.choices[0].text.strip()
 
@@ -117,14 +118,13 @@ def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
         api_key=openaiKey,
     )
     
-    response = client.completions.create(
-        model="text-davinci-003",
-        prompt=prompt,
-        max_tokens=150,
-        n=1,
-        stop=None,
-        temperature=0.7
-    )
+response = openai.Completion.create(
+    model="gpt-3.5-turbo",  
+    prompt=prompt,
+    max_tokens=100,
+    temperature=0.3
+)
+
 
     sorted_tasks = response.choices[0].text.strip().split('\n')
     return sorted_tasks
