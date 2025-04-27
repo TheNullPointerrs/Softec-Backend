@@ -80,13 +80,12 @@ def summarize_text(text):
     
     prompt = f"Please summarize the following text concisely:\n\n{text}"
     
-response = openai.Completion.create(
-    model="gpt-3.5-turbo",  # or "gpt-4" depending on availability
-    prompt=prompt,
-    max_tokens=100,
-    temperature=0.3
-)
-
+    response = client.completions.create(
+        model="gpt-3.5-turbo",  # Note: For newer OpenAI client, use chat completions for gpt-3.5-turbo
+        prompt=prompt,
+        max_tokens=100,
+        temperature=0.3
+    )
     
     return response.choices[0].text.strip()
 
@@ -109,7 +108,6 @@ def generate_checklist(goal):
 
 
 
-# Function to interact with OpenAI API for mood-based task sorting
 def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
     # Prepare prompt for OpenAI API to prioritize tasks based on the mood
     prompt = f"User's current mood: {mood}\n\nTasks:\n" + "\n".join(tasks) + "\n\nPrioritize the tasks based on the mood and sort them in the most appropriate order."
@@ -118,13 +116,12 @@ def sort_tasks_based_on_mood(mood: str, tasks: list) -> list:
         api_key=openaiKey,
     )
     
-response = openai.Completion.create(
-    model="gpt-3.5-turbo",  
-    prompt=prompt,
-    max_tokens=100,
-    temperature=0.3
-)
-
+    response = client.completions.create(
+        model="gpt-3.5-turbo",
+        prompt=prompt,
+        max_tokens=100,
+        temperature=0.3
+    )
 
     sorted_tasks = response.choices[0].text.strip().split('\n')
     return sorted_tasks
